@@ -1,11 +1,11 @@
-Dataset,Model,ROC-AUC,sklearn ROC-AUC,PR-AUC,Recall,Precision,F1,Accuracy,Threshold,Time (s)
-Diabetes 130-US,Baseline (always no),0.5,,0.1177,0.0,0.0,0.0,0.8823,0.5,0.001
-Diabetes 130-US,Logistic Regression,0.6716,0.6715,0.2251,0.5111,0.2026,0.2902,0.7057,0.53,1.551
-Diabetes 130-US,KNN (k=9),0.6037,0.6037,0.1621,0.5528,0.1537,0.2405,0.589,0.445,5.4805
-Diabetes 130-US,Random Forest,0.6573,0.659,0.2088,0.5854,0.1824,0.2781,0.6422,0.515,18.5394
-Diabetes 130-US,Ensemble (soft vote),0.6603,0.6612,0.2163,0.5754,0.1825,0.2771,0.6466,0.51,24.3574
-Hospital Readmissions,Baseline (always no),0.5,,0.4702,0.0,0.0,0.0,0.5298,0.5,0.0
-Hospital Readmissions,Logistic Regression,0.6366,0.6378,0.6073,0.9094,0.4976,0.6432,0.5256,0.365,2.7519
-Hospital Readmissions,KNN (k=9),0.5816,0.5816,0.5389,0.9685,0.4762,0.6385,0.4842,0.115,1.4772
-Hospital Readmissions,Random Forest,0.6287,0.6335,0.5938,0.9575,0.483,0.6421,0.498,0.315,17.486
-Hospital Readmissions,Ensemble (soft vote),0.6322,0.6339,0.6029,0.9179,0.4918,0.6405,0.5154,0.35,21.3093
+Dataset,Model,ROC-AUC,sklearn ROC-AUC,PR-AUC,Recall,Precision,F1,Accuracy,Threshold
+Diabetes 130-US,Baseline (always no),0.5,,0.1177,0.0,0.0,0.0,0.8823,0.5
+Diabetes 130-US,Logistic Regression,0.6716,0.6715,0.2251,0.5111,0.2026,0.2902,0.7057,0.53
+Diabetes 130-US,KNN (k=9),0.6037,0.6037,0.1621,0.5528,0.1537,0.2405,0.589,0.445
+Diabetes 130-US,Random Forest,0.6573,0.659,0.2088,0.5854,0.1824,0.2781,0.6422,0.515
+Diabetes 130-US,Ensemble (soft vote),0.6603,0.6612,0.2163,0.5754,0.1825,0.2771,0.6466,0.51
+Hospital Readmissions,Baseline (always no),0.5,,0.4702,0.0,0.0,0.0,0.5298,0.5
+Hospital Readmissions,Logistic Regression,0.6366,0.6378,0.6073,0.9094,0.4976,0.6432,0.5256,0.365
+Hospital Readmissions,KNN (k=9),0.5816,0.5816,0.5389,0.9685,0.4762,0.6385,0.4842,0.115
+Hospital Readmissions,Random Forest,0.6287,0.6335,0.5938,0.9575,0.483,0.6421,0.498,0.315
+Hospital Readmissions,Ensemble (soft vote),0.6322,0.6339,0.6029,0.9179,0.4918,0.6405,0.5154,0.35

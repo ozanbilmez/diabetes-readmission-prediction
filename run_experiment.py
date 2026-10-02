@@ -26,8 +26,9 @@ DATASETS = [
     ("hospital", "Hospital Readmissions", DATA_DIR / "hospital_readmissions.csv", load_hospital_readmissions),
 ]
 
+# Timings are printed but not saved, so a rerun with the same seed gives an identical file
 COLUMNS = ["Dataset", "Model", "ROC-AUC", "sklearn ROC-AUC", "PR-AUC", "Recall", "Precision",
-           "F1", "Accuracy", "Threshold", "Time (s)"]
+           "F1", "Accuracy", "Threshold"]
 
 BASELINE = "Baseline (always no)"
 LR_PARAMS = dict(learning_rate=0.05, num_iterations=6000)
@@ -79,12 +80,27 @@ def run_dataset(name, path, loader):
     return rows, data, results, models
 
 
+def keep_previous_rows(table, previous_path, skipped):
+    """Carry over earlier results of datasets that were skipped in this run.
+
+    The Kaggle file is not shipped with the repo, so without this a fresh clone
+    would wipe its committed results.
+    """
+    if not skipped or not Path(previous_path).exists():
+        return table
+    previous = pd.read_csv(previous_path)
+    combined = pd.concat([table, previous[previous["Dataset"].isin(skipped)]], ignore_index=True)
+    order = {name: i for i, (_, name, _, _) in enumerate(DATASETS)}
+    return combined.sort_values("Dataset", key=lambda s: s.map(order), kind="stable").reset_index(drop=True)
+
+
 def main():
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    rows = []
+    rows, skipped = [], []
     for key, name, path, loader in DATASETS:
         if not path.exists():
-            print(f"\nSkipping {name}: {path.name} not found (see data/README.md)")
+            print(f"\nSkipping {name}: {path.name} not found (see data/README.md), keeping its previous results")
+            skipped.append(name)
             continue
         dataset_rows, data, results, models = run_dataset(name, path, loader)
         rows += dataset_rows
@@ -103,6 +119,7 @@ def main():
             plots.plot_confusion_matrix(cm, f"{best} - {name} test set", FIGURES_DIR / "confusion_matrix.png")
 
     table = pd.DataFrame(rows)[COLUMNS].round(4)
+    table = keep_previous_rows(table, RESULTS_DIR / "metrics.csv", skipped)
     table.to_csv(RESULTS_DIR / "metrics.csv", index=False)
     plots.plot_scratch_vs_sklearn(table, FIGURES_DIR / "scratch_vs_sklearn_auc.png")
     print("\n" + table.to_string(index=False))

@@ -9,25 +9,25 @@ from matplotlib.patches import Patch
 
 from src.metrics import MetricsFromScratch
 
-SURFACE = "#fcfcfb"
-INK = "#0b0b0b"
-INK_SECONDARY = "#52514e"
-MUTED = "#898781"
+BACKGROUND = "#fcfcfb"
+TEXT = "#0b0b0b"
+TEXT_LIGHT = "#52514e"
+GRAY = "#898781"
 GRID = "#e1e0d9"
 AXIS = "#c3c2b7"
-SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]  # fixed order: LR, KNN, RF, ensemble
+MODEL_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]  # fixed order: LR, KNN, RF, ensemble
 RAISES_RISK, LOWERS_RISK = "#e34948", "#2a78d6"
 BLUES = LinearSegmentedColormap.from_list("blues", ["#cde2fb", "#86b6ef", "#2a78d6", "#184f95"])
 
 plt.rcParams.update({
-    "figure.facecolor": SURFACE, "axes.facecolor": SURFACE, "savefig.facecolor": SURFACE,
-    "axes.edgecolor": AXIS, "axes.labelcolor": INK_SECONDARY, "axes.titlecolor": INK,
+    "figure.facecolor": BACKGROUND, "axes.facecolor": BACKGROUND, "savefig.facecolor": BACKGROUND,
+    "axes.edgecolor": AXIS, "axes.labelcolor": TEXT_LIGHT, "axes.titlecolor": TEXT,
     "axes.titlesize": 12, "axes.titleweight": "semibold", "axes.labelsize": 10,
     "axes.spines.top": False, "axes.spines.right": False,
     "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.8,
     "xtick.color": AXIS, "ytick.color": AXIS,
-    "xtick.labelcolor": INK_SECONDARY, "ytick.labelcolor": INK_SECONDARY,
-    "legend.frameon": False, "legend.fontsize": 9, "legend.labelcolor": INK_SECONDARY,
+    "xtick.labelcolor": TEXT_LIGHT, "ytick.labelcolor": TEXT_LIGHT,
+    "legend.frameon": False, "legend.fontsize": 9, "legend.labelcolor": TEXT_LIGHT,
     "font.family": "sans-serif", "font.sans-serif": ["Segoe UI", "Helvetica", "Arial", "DejaVu Sans"],
     "savefig.dpi": 150, "savefig.bbox": "tight",
 })
@@ -43,15 +43,15 @@ def plot_roc_pr(y_true, probs_by_model, title, path):
     fig, (ax_roc, ax_pr) = plt.subplots(1, 2, figsize=(11, 4.6))
     prevalence = np.mean(y_true)
 
-    for color, (name, prob) in zip(SERIES, probs_by_model.items()):
+    for color, (name, prob) in zip(MODEL_COLORS, probs_by_model.items()):
         m = MetricsFromScratch(y_true, (prob >= 0.5).astype(int), prob)
         fpr, tpr, _ = m.roc_curve()
         precision, recall, _ = m.precision_recall_curve()
         ax_roc.plot(fpr, tpr, color=color, lw=2, label=f"{name} (AUC {m.roc_auc():.3f})")
         ax_pr.plot(recall, precision, color=color, lw=2, label=f"{name} (AP {m.average_precision():.3f})")
 
-    ax_roc.plot([0, 1], [0, 1], color=MUTED, lw=1, label="Chance")
-    ax_pr.axhline(prevalence, color=MUTED, lw=1, label=f"Chance (readmission rate {prevalence:.1%})")
+    ax_roc.plot([0, 1], [0, 1], color=GRAY, lw=1, label="Chance")
+    ax_pr.axhline(prevalence, color=GRAY, lw=1, label=f"Chance (readmission rate {prevalence:.1%})")
 
     ax_roc.set(title="ROC curve", xlabel="False positive rate", ylabel="True positive rate (recall)",
                xlim=(0, 1), ylim=(0, 1.01))
@@ -59,7 +59,7 @@ def plot_roc_pr(y_true, probs_by_model, title, path):
               xlim=(0, 1), ylim=(0, 1.01))
     ax_roc.legend(loc="lower right")
     ax_pr.legend(loc="upper right")
-    fig.suptitle(f"{title} - test set", color=INK, fontsize=13, fontweight="semibold")
+    fig.suptitle(f"{title} - test set", color=TEXT, fontsize=13, fontweight="semibold")
     fig.tight_layout()
     _save(fig, path)
 
@@ -74,9 +74,9 @@ def plot_scratch_vs_sklearn(table, path):
         part = rows[rows["Dataset"] == dataset].iloc[::-1]
         ypos = np.arange(len(part))
         # scikit-learn as a ring and our model as a dot inside it: equal scores read as a filled ring
-        ax.scatter(part["sklearn ROC-AUC"], ypos, s=170, facecolor="none", edgecolor=SERIES[1], linewidth=2,
+        ax.scatter(part["sklearn ROC-AUC"], ypos, s=170, facecolor="none", edgecolor=MODEL_COLORS[1], linewidth=2,
                    zorder=2, label="scikit-learn")
-        ax.scatter(part["ROC-AUC"], ypos, s=45, color=SERIES[0], zorder=3, label="From scratch")
+        ax.scatter(part["ROC-AUC"], ypos, s=45, color=MODEL_COLORS[0], zorder=3, label="From scratch")
         ax.set_yticks(ypos, part["Model"])
         ax.set(title=dataset, xlabel="Test ROC-AUC")
         ax.set_ylim(-0.6, len(part) - 0.4)
@@ -117,7 +117,7 @@ def plot_confusion_matrix(cm, title, path):
         for j in range(2):
             ax.text(j, i, f"{cm[i, j]:,}\n{shares[i, j]:.0%} of actual",
                     ha="center", va="center", fontsize=10,
-                    color="white" if shares[i, j] > 0.55 else INK)
+                    color="white" if shares[i, j] > 0.55 else TEXT)
     ax.set_xticks([0, 1], labels)
     ax.set_yticks([0, 1], labels)
     ax.set(xlabel="Predicted", ylabel="Actual", title=title)
