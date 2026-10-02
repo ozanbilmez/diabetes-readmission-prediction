@@ -42,13 +42,13 @@ load + row-wise cleaning
   -> train models -> choose threshold on validation (max F1) -> score once on test
 ```
 
-Choices that keep the test score honest:
+The test score is only worth something if the test set stays unseen, so:
 
-- **Split by patient.** 46.2% of the encounters belong to patients who appear more than once. A random split would put the same person in train and test, so the split is done on patient IDs.
-- **Fit on the training set only.** Clipping bounds, means and standard deviations, and the feature ranking are learned from the training split and then applied to validation and test.
-- **Balance only the training set.** Undersampling helps the models learn the rare class, but validation and test keep the real readmission rate, so the numbers mean what they would mean in a hospital.
-- **Pick the threshold on validation.** The decision threshold that maximises F1 is chosen on the validation set. The test set is used once, at the end.
-- **Fixed seed.** `python run_experiment.py` reproduces every number and figure here.
+- The UCI data is split by patient ID. 46.2% of the encounters belong to patients who appear more than once, and a random split would put the same person in both train and test. The Kaggle data has no patient IDs, so it gets a split that keeps the class ratio instead.
+- Clipping bounds (Q1 - 3·IQR to Q3 + 3·IQR, on the log-transformed values), means, standard deviations and the feature ranking are learned from the training split only, then applied to validation and test.
+- Undersampling to a 50/50 class ratio is applied to the training set only (it was part of the original project and keeps KNN and the trees fast). Validation and test keep the real readmission rate, so the scores mean what they would mean in a hospital.
+- The decision threshold is the one that maximises F1 on the validation set. The test set is used once, at the end.
+- Everything runs with a fixed seed, so `python run_experiment.py` gives the same numbers and figures every time. The Kaggle part needs the downloaded file; without it, the Kaggle results already in `results/` are kept.
 
 Cleaning that comes from the domain:
 
@@ -71,13 +71,11 @@ Test set of the Diabetes 130-US data (19,546 encounters, 11.8% readmitted):
 | Random Forest | 0.657 | 0.659 | 0.209 | 0.585 | 0.182 | 0.278 | 0.642 |
 | Ensemble (soft vote) | 0.660 | 0.661 | 0.216 | 0.575 | 0.182 | 0.277 | 0.647 |
 
-How to read this:
+Accuracy is not the number to look at: predicting "no readmission" for everyone already scores 0.882 and finds none of the readmissions. ROC-AUC shows how well a model ranks patients by risk, and PR-AUC shows how useful its positive predictions are (random guessing gets the readmission rate, 0.118).
 
-- **Accuracy is not the metric to look at.** Predicting "no readmission" for everyone scores 0.882 accuracy and finds none of the readmissions.
-- **ROC-AUC** shows how well a model ranks patients by risk. **PR-AUC** shows how useful the positive predictions are; random guessing gets the readmission rate, 0.118.
-- **Logistic regression is the best model here** (ROC-AUC 0.672, PR-AUC 0.225). At the threshold chosen on validation it flags 51% of the patients who were readmitted, and 20% of the flagged patients were actually readmitted, about 1.7 times the base rate.
-- **The random forest and the ensemble do not beat it.** With a weak signal and mostly one-hot and count features, a linear model is hard to beat on this data.
-- **This is in line with published work.** On the same dataset, Emi-Johnson and Nkrumah (2025) report ROC-AUC between 0.579 and 0.667 for a neural network, random forest, logistic regression and XGBoost.
+Logistic regression does best, with a ROC-AUC of 0.672 and a PR-AUC of 0.225. At the threshold chosen on validation it flags 51% of the patients who were readmitted, and 20% of the patients it flags were actually readmitted, about 1.7 times the base rate. The random forest and the ensemble do not beat it; with a weak signal and mostly one-hot and count features, a linear model is hard to beat on this data.
+
+These scores are in line with published work on the same dataset: Emi-Johnson and Nkrumah (2025) report ROC-AUC between 0.579 and 0.667 for a neural network, random forest, logistic regression and XGBoost.
 
 ![Confusion matrix](results/figures/confusion_matrix.png)
 
@@ -95,12 +93,11 @@ With almost half of the patients readmitted, the F1-maximising threshold ends up
 
 ## Checked against scikit-learn
 
-The scikit-learn equivalents are trained on exactly the same preprocessed data with the same hyperparameters, and their test ROC-AUC is compared with the from-scratch version.
+Each scikit-learn model is trained on exactly the same preprocessed data with matching settings (same k, number of trees, depth and features per split), and its test ROC-AUC is compared with the from-scratch version.
 
 ![From scratch vs scikit-learn](results/figures/scratch_vs_sklearn_auc.png)
 
-- **Logistic regression and KNN** match scikit-learn to within 0.002 (KNN exactly).
-- **The random forest and the ensemble** are within 0.005. The trees try at most 100 split points per feature and use different random draws, so a small gap is expected.
+KNN matches scikit-learn exactly. Logistic regression is within 0.002; scikit-learn's version adds a small L2 penalty (C=1) that the from-scratch one does not have. The random forest and the ensemble are within 0.005, which is expected since the from-scratch trees try at most 100 split points per feature and use different random draws.
 
 The tests (`pytest`) check the metrics, the KNN probabilities, logistic regression and the preprocessing steps against scikit-learn or against hand-computed values.
 
