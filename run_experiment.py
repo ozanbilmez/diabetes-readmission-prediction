@@ -1,9 +1,9 @@
-from my_logistic_regression import LogisticRegressionFromScratch
-from my_knn import KNNFromScratch
-from my_random_forest import RandomForestFromScratch 
-from my_metrics import MetricsFromScratch
-from data_loader import load_and_clean_diabetes_data
-from data_loader_2 import load_and_clean_second_dataset
+from src.models.logistic_regression import LogisticRegressionFromScratch
+from src.models.knn import KNNFromScratch
+from src.models.random_forest import RandomForestFromScratch
+from src.models.ensemble import VotingClassifierFromScratch
+from src.metrics import MetricsFromScratch
+from src.data import load_and_clean_diabetes_data, load_and_clean_second_dataset
 import numpy as np
 import pandas as pd
 import time
@@ -13,32 +13,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.metrics import accuracy_score
-
-# --- ENSEMBLE CLASS ---
-class VotingClassifierFromScratch:
-    def __init__(self, models):
-        self.models = models
-
-    def fit(self, X, y):
-        for name, model in self.models:
-            model.fit(X, y)
-
-    def predict_proba(self, X):
-        all_probs = []
-        for name, model in self.models:
-            try:
-                p = model.predict_proba(X)
-                if isinstance(p, list): p = np.array(p)
-                all_probs.append(p)
-            except:
-                pass 
-        
-        if not all_probs: return np.zeros(len(X))
-        return np.mean(all_probs, axis=0)
-
-    def predict(self, X):
-        probs = self.predict_proba(X)
-        return np.array([1 if p >= 0.5 else 0 for p in probs])
 
 # --- HELPER FUNCTIONS ---
 def scale_features(X):
@@ -121,8 +95,8 @@ def run_verification(X_train, y_train, X_test, y_test, algo_name):
 
 def run_experiment():
     datasets = [
-        ("Diabetes 130-US", "diabetic_data.csv", load_and_clean_diabetes_data),
-        ("Hosp. Readmissions", "hospital_readmissions.csv", load_and_clean_second_dataset)
+        ("Diabetes 130-US", "data/diabetic_data.csv", load_and_clean_diabetes_data),
+        ("Hosp. Readmissions", "data/hospital_readmissions.csv", load_and_clean_second_dataset)
     ]
     
     results = []

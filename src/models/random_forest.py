@@ -1,6 +1,6 @@
 import numpy as np
 from collections import Counter
-from my_decision_tree import DecisionTreeFromScratch
+from src.models.decision_tree import DecisionTreeFromScratch
 
 class RandomForestFromScratch:
     def __init__(self, n_trees=10, max_depth=10, min_samples_split=2, n_features=None):
