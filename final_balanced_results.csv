@@ -1,0 +1,9 @@
+Dataset,Algorithm,Scratch Acc,Sklearn Acc,Recall,Precision,F1-Score,AUC,Time (s)
+Diabetes 130-US,Logistic Regression,0.6077,0.6052,0.6147,0.6057,0.6102,0.6484,19.45
+Diabetes 130-US,KNN (k=9),0.524,0.524,0.4701,0.5291,0.4979,0.534,1.62
+Diabetes 130-US,Random Forest,0.603,0.6032,0.6174,0.5996,0.6084,0.6435,129.99
+Diabetes 130-US,Ensemble (Soft Vote),0.5973,0.5998,0.5962,0.597,0.5966,0.6416,133.03
+Hosp. Readmissions,Logistic Regression,0.5912,0.5881,0.6043,0.6033,0.6038,0.6242,12.53
+Hosp. Readmissions,KNN (k=9),0.514,0.514,0.5047,0.5519,0.5272,0.5236,1.63
+Hosp. Readmissions,Random Forest,0.5769,0.5828,0.5603,0.5951,0.5772,0.5993,87.16
+Hosp. Readmissions,Ensemble (Soft Vote),0.5869,0.5782,0.5989,0.5993,0.5991,0.6207,102.16
