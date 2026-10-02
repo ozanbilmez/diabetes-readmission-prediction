@@ -7,8 +7,10 @@ from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 
+from src import plots
 from src.data import load_diabetes_130, load_hospital_readmissions
 from src.evaluation import evaluate_model, sklearn_auc
+from src.metrics import MetricsFromScratch
 from src.models import (AlwaysNegativeBaseline, KNNFromScratch, LogisticRegressionFromScratch,
                         RandomForestFromScratch, VotingClassifierFromScratch)
 from src.preprocessing import prepare_data
@@ -17,6 +19,7 @@ SEED = 42
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
 RESULTS_DIR = ROOT / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
 
 DATASETS = [
     ("diabetes", "Diabetes 130-US", DATA_DIR / "diabetic_data.csv", load_diabetes_130),
@@ -77,7 +80,7 @@ def run_dataset(name, path, loader):
 
 
 def main():
-    RESULTS_DIR.mkdir(exist_ok=True)
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     rows = []
     for key, name, path, loader in DATASETS:
         if not path.exists():
@@ -86,8 +89,22 @@ def main():
         dataset_rows, data, results, models = run_dataset(name, path, loader)
         rows += dataset_rows
 
+        candidates = [m for m in results if m != BASELINE]
+        plots.plot_roc_pr(data["y_test"], {m: results[m]["test_prob"] for m in candidates},
+                          name, FIGURES_DIR / f"roc_pr_{key}.png")
+
+        if key == "diabetes":
+            plots.plot_feature_importance(models["Logistic Regression"].weights, data["feature_names"],
+                                          FIGURES_DIR / "feature_importance_lr.png")
+            # the model shown is picked on validation AUC, so the test set plays no part in the choice
+            best = max(candidates, key=lambda m: results[m]["val ROC-AUC"])
+            preds = (results[best]["test_prob"] >= results[best]["Threshold"]).astype(int)
+            cm = MetricsFromScratch(data["y_test"], preds).confusion_matrix()
+            plots.plot_confusion_matrix(cm, f"{best} - {name} test set", FIGURES_DIR / "confusion_matrix.png")
+
     table = pd.DataFrame(rows)[COLUMNS].round(4)
     table.to_csv(RESULTS_DIR / "metrics.csv", index=False)
+    plots.plot_scratch_vs_sklearn(table, FIGURES_DIR / "scratch_vs_sklearn_auc.png")
     print("\n" + table.to_string(index=False))
 
 
