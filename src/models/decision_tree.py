@@ -1,52 +1,63 @@
 import numpy as np
 from collections import Counter
 
+
 class Node:
-    def __init__(self, feature=None, threshold=None, left=None, right=None, *, value=None):
+    def __init__(self, feature=None, threshold=None, left=None, right=None, *, value=None, prob=None):
         self.feature = feature
         self.threshold = threshold
         self.left = left
         self.right = right
         self.value = value
+        self.prob = prob  # share of class 1 among the training samples in this leaf
 
     def is_leaf_node(self):
         return self.value is not None
 
+
 class DecisionTreeFromScratch:
-    def __init__(self, min_samples_split=2, max_depth=100, n_features=None):
+    def __init__(self, min_samples_split=2, max_depth=100, n_features=None, random_state=None):
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
-        self.n_features = n_features
+        self.n_features = n_features  # features tried at each split: None (all), an int or "sqrt"
+        self.random_state = random_state
         self.root = None
 
     def fit(self, X, y):
-        self.n_features = X.shape[1] if not self.n_features else min(X.shape[1], self.n_features)
+        self.n_features_ = self._features_per_split(X.shape[1])
+        self.rng = np.random.default_rng(self.random_state)
         self.root = self._grow_tree(X, y)
+
+    def _features_per_split(self, n_total):
+        if self.n_features is None: return n_total
+        if self.n_features == "sqrt": return max(1, int(np.sqrt(n_total)))
+        return min(n_total, self.n_features)
 
     def _grow_tree(self, X, y, depth=0):
         n_samples, n_feats = X.shape
         n_labels = len(np.unique(y))
 
         if (depth >= self.max_depth or n_labels == 1 or n_samples < self.min_samples_split):
-            leaf_value = self._most_common_label(y)
-            return Node(value=leaf_value)
+            return self._leaf(y)
 
-        feat_idxs = np.random.choice(n_feats, self.n_features, replace=False)
+        feat_idxs = self.rng.choice(n_feats, self.n_features_, replace=False)
         best_feature, best_thresh = self._best_split(X, y, feat_idxs)
 
         if best_feature is None:
-             leaf_value = self._most_common_label(y)
-             return Node(value=leaf_value)
+            return self._leaf(y)
 
         left_idxs, right_idxs = self._split(X[:, best_feature], best_thresh)
-        
+
         if len(left_idxs) == 0 or len(right_idxs) == 0:
-             leaf_value = self._most_common_label(y)
-             return Node(value=leaf_value)
-            
+            return self._leaf(y)
+
         left = self._grow_tree(X[left_idxs, :], y[left_idxs], depth + 1)
         right = self._grow_tree(X[right_idxs, :], y[right_idxs], depth + 1)
         return Node(feature=best_feature, threshold=best_thresh, left=left, right=right)
+
+    def _leaf(self, y):
+        prob = float(np.mean(y)) if len(y) else 0.0
+        return Node(value=self._most_common_label(y), prob=prob)
 
     def _best_split(self, X, y, feat_idxs):
         best_gain = -1
@@ -92,9 +103,12 @@ class DecisionTreeFromScratch:
         return counter.most_common(1)[0][0]
 
     def predict(self, X):
-        return np.array([self._traverse_tree(x, self.root) for x in X])
+        return np.array([self._find_leaf(x, self.root).value for x in X])
 
-    def _traverse_tree(self, x, node):
-        if node.is_leaf_node(): return node.value
-        if x[node.feature] <= node.threshold: return self._traverse_tree(x, node.left)
-        return self._traverse_tree(x, node.right)
+    def predict_proba(self, X):
+        return np.array([self._find_leaf(x, self.root).prob for x in X])
+
+    def _find_leaf(self, x, node):
+        if node.is_leaf_node(): return node
+        if x[node.feature] <= node.threshold: return self._find_leaf(x, node.left)
+        return self._find_leaf(x, node.right)
