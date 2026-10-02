@@ -3,7 +3,7 @@ from src.models.knn import KNNFromScratch
 from src.models.random_forest import RandomForestFromScratch
 from src.models.ensemble import VotingClassifierFromScratch
 from src.metrics import MetricsFromScratch
-from src.data import load_and_clean_diabetes_data, load_and_clean_second_dataset
+from src.data import load_diabetes_130, load_hospital_readmissions
 import numpy as np
 import pandas as pd
 import time
@@ -95,8 +95,8 @@ def run_verification(X_train, y_train, X_test, y_test, algo_name):
 
 def run_experiment():
     datasets = [
-        ("Diabetes 130-US", "data/diabetic_data.csv", load_and_clean_diabetes_data),
-        ("Hosp. Readmissions", "data/hospital_readmissions.csv", load_and_clean_second_dataset)
+        ("Diabetes 130-US", "data/diabetic_data.csv", load_diabetes_130),
+        ("Hosp. Readmissions", "data/hospital_readmissions.csv", load_hospital_readmissions)
     ]
     
     results = []
@@ -107,8 +107,8 @@ def run_experiment():
         print(f"{'='*60}")
 
         try:
-            X_raw, y = loader_func(filename)
-            if X_raw is None: continue
+            X_df, y, _ = loader_func(filename)
+            X_raw = X_df.to_numpy()
         except FileNotFoundError:
             print(f"File not found: {filename}")
             continue
